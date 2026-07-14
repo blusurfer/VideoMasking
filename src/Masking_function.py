@@ -7,7 +7,7 @@ container = av.open(av.datasets.curated("pexels/time-lapse-video-of-night-sky-85
 frames = [frame for frame in container.decode(video=0)]
 frames[0].to_image().save("/images/first_frame.png")
 
-程序开始
+# 程序开始
 
 
 # # 1. 导入三个视频

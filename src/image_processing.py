@@ -1,39 +1,33 @@
-from operator import truediv
-
-from PIL import Image
+from PIL import Image, ImageOps
 import numpy as np
 
 im1 = Image.open("/Volumes/Jerry's disk/Projects/VideoMasking/src/images/GjhuAilbYAAU-YC.jpeg")
 im1 = im1.convert("RGB")
 im2 = Image.open("/Volumes/Jerry's disk/Projects/VideoMasking/src/images/O1CN01HR6nff1zDwnCPlNUd_!!193306681.jpg")
 im2 = im2.convert("RGB")
+mask = Image.open("/Volumes/Jerry's disk/Projects/VideoMasking/src/images/GL. 2021-08-08 19.31.08.jpeg")
+mask = mask.convert("RGB")
 
 
+def merge_images(img1, img2, mask_img, effect):
+    img1 = ImageOps.fit(img1, mask_img.size, centering=(0.5, 0.5))
+    img2 = ImageOps.fit(img2, mask_img.size, centering=(0.5, 0.5))
+    arr1 = np.array(img1)
+    arr2 = np.array(img2)
+    mask_arr = np.array(mask_img)
+    canvas = np.zeros_like(mask_img)
 
+    for x in np.arange(mask_arr.shape[0]):
+        for y in np.arange(mask_arr.shape[1]):
+            pixel = mask_arr[x][y]
+            r, g, b = pixel[0], pixel[1], pixel[2]
+            if effect(r, g, b):
+                canvas[x][y] = arr2[x][y]
+            else:
+                canvas[x][y] = arr1[x][y]
 
-arr1 = np.array(im1)
-arr2 = np.array(im2)
-height_1 = arr1.shape[0]
-width_1 = arr1.shape[1]
-height_2 = arr2.shape[0]
-width_2 = arr2.shape[1]
+    return Image.fromarray(canvas)
 
-min_wdith = min(width_1, width_2)
-min_height = min(height_1, height_2)
-
-box1 = ((width_1 - min_wdith)/2, ((height_1 - min_height)/2), min_wdith + (width_1 - min_wdith)/2, min_height + ((height_1 - min_height)/2))
-box2 = ((width_2 - min_wdith)/2, ((height_2 - min_height)/2), min_wdith + (width_2 - min_wdith)/2, min_height + ((height_2 - min_height)/2))
-
-im1 = im1.crop(box1)
-im2 = im2.crop(box2)
-
-arr1 = np.array(im1)
-arr2 = np.array(im2)
-narr = np.zeros_like(im1)
-
-# print(arr1.shape, arr2.shape)
-# im1.show()
-# im2.show()
 
 def brightness_calculation(r,g,b):
     y = 0.2126 * r + 0.7152 * g + 0.0722 * b
@@ -42,16 +36,5 @@ def brightness_calculation(r,g,b):
     else:
         return False
 
-for x in np.arange(arr1.shape[0]):
-    for y in np.arange(arr1.shape[1]):
-        pixel = arr1[x][y]
-        r, g, b = pixel[0], pixel[1], pixel[2]
-        if brightness_calculation(r, g, b):
-            narr[x][y] = arr2[x][y]
-        else:
-            narr[x][y] = arr1[x][y]
 
-output = Image.fromarray(narr)
-
-output.show()
-
+merge_images(im1, im2, mask, brightness_calculation).show()
